@@ -1,19 +1,31 @@
 import 'package:flutter/material.dart';
 
-import 'data/repositories/usuario_memoria.dart';
+import 'data/repositories/usuario_api.dart';
+import 'domain/usecases/obtener_usuarios.dart';
 import 'domain/usecases/obtener_usuarios_con_vocal.dart';
 import 'presentation/pantalla_usuarios.dart';
 
 void main() {
-  final repositorio = UsuarioMemoria();
+  final repositorio = UsuarioApi();
+  final obtenerUsuarios = ObtenerUsuarios(repositorio);
   final obtenerUsuariosConVocal = ObtenerUsuariosConVocal(repositorio);
 
-  runApp(MyApp(obtenerUsuariosConVocal: obtenerUsuariosConVocal));
+  runApp(
+    MyApp(
+      obtenerUsuarios: obtenerUsuarios,
+      obtenerUsuariosConVocal: obtenerUsuariosConVocal,
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({required this.obtenerUsuariosConVocal, super.key});
+  const MyApp({
+    required this.obtenerUsuarios,
+    required this.obtenerUsuariosConVocal,
+    super.key,
+  });
 
+  final ObtenerUsuarios obtenerUsuarios;
   final ObtenerUsuariosConVocal obtenerUsuariosConVocal;
 
   @override
@@ -53,7 +65,10 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: PantallaUsuarios(obtenerUsuariosConVocal: obtenerUsuariosConVocal),
+      home: PantallaUsuarios(
+        obtenerUsuarios: obtenerUsuarios,
+        obtenerUsuariosConVocal: obtenerUsuariosConVocal,
+      ),
     );
   }
 }

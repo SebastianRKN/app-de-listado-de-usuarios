@@ -10,8 +10,23 @@ class UsuarioApi implements UsuarioRepository {
     'https://jsonplaceholder.typicode.com/users',
   );
 
+  Future<List<Usuario>>? _solicitud;
+
   @override
-  Future<List<Usuario>> obtener() async {
+  Future<List<Usuario>> obtener() {
+    return _solicitud ??= _obtenerDesdeApi();
+  }
+
+  Future<List<Usuario>> _obtenerDesdeApi() async {
+    try {
+      return await _descargarUsuarios();
+    } catch (_) {
+      _solicitud = null;
+      rethrow;
+    }
+  }
+
+  Future<List<Usuario>> _descargarUsuarios() async {
     final respuesta = await http.get(_url);
 
     if (respuesta.statusCode != 200) {

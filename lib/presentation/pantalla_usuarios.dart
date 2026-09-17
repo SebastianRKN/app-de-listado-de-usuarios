@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../domain/entities/usuario.dart';
+import '../domain/usecases/obtener_usuarios.dart';
 import '../domain/usecases/obtener_usuarios_con_vocal.dart';
 
 class PantallaUsuarios extends StatefulWidget {
-  const PantallaUsuarios({required this.obtenerUsuariosConVocal, super.key});
+  const PantallaUsuarios({
+    required this.obtenerUsuarios,
+    required this.obtenerUsuariosConVocal,
+    super.key,
+  });
 
+  final ObtenerUsuarios obtenerUsuarios;
   final ObtenerUsuariosConVocal obtenerUsuariosConVocal;
 
   @override
@@ -14,16 +20,17 @@ class PantallaUsuarios extends StatefulWidget {
 
 class _PantallaUsuariosState extends State<PantallaUsuarios> {
   final TextEditingController _controladorBusqueda = TextEditingController();
-  List<Usuario> _usuarios = const [];
+  List<Usuario> _usuariosConVocal = const [];
+  List<Usuario> _todosLosUsuarios = const [];
   bool _cargando = true;
   String? _error;
   String _busqueda = '';
 
   List<Usuario> get _usuariosVisibles {
     final consulta = _busqueda.trim().toLowerCase();
-    if (consulta.isEmpty) return _usuarios;
+    if (consulta.isEmpty) return _usuariosConVocal;
 
-    return _usuarios
+    return _todosLosUsuarios
         .where((usuario) {
           return usuario.nombre.toLowerCase().contains(consulta) ||
               usuario.email.toLowerCase().contains(consulta);
@@ -50,11 +57,15 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
     });
 
     try {
-      final usuarios = await widget.obtenerUsuariosConVocal.ejecutar();
+      final resultados = await Future.wait([
+        widget.obtenerUsuariosConVocal.ejecutar(),
+        widget.obtenerUsuarios.ejecutar(),
+      ]);
       if (!mounted) return;
 
       setState(() {
-        _usuarios = usuarios;
+        _usuariosConVocal = resultados[0];
+        _todosLosUsuarios = resultados[1];
         _cargando = false;
       });
     } catch (error) {
@@ -94,7 +105,7 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
                 children: [
-                  _Encabezado(total: _usuarios.length),
+                  _Encabezado(total: _usuariosConVocal.length),
                   const SizedBox(height: 20),
                   if (!_cargando && _error == null) ...[
                     TextField(
@@ -102,7 +113,7 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
                       onChanged: (valor) => setState(() => _busqueda = valor),
                       textInputAction: TextInputAction.search,
                       decoration: InputDecoration(
-                        hintText: 'Buscar por nombre o correo',
+                        hintText: 'Buscar entre todos los usuarios de la API',
                         prefixIcon: const Icon(Icons.search_rounded),
                         suffixIcon: _busqueda.isEmpty
                             ? null
